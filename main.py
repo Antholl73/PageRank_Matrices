@@ -1,3 +1,14 @@
+#====================================================
+#Integrantes:
+# Bernedo Coya Jose Daniel
+# Avilés Fuentes Anthony Francisco
+#Profesores:
+# Daniel Alexis Gutierrez Pachas
+# Rosmery Violeta Quispe Zavala
+#Grupo:
+# CComp 3-1
+#====================================================
+
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +26,6 @@ G.add_edges_from([
     (3,4),
     (5,4),
     (6,4),
-
     (7,4),
 
     (0,1),
@@ -44,10 +54,10 @@ for i in range(n):
 
     suma_fila = np.sum(A[i])
 
-    if suma_fila > 0:
+    if suma_fila != 0:
         P[i] = A[i] / suma_fila
     else:
-        P[i] = np.ones(n) / n
+        P[i] = 1 / n
 
 # ===================================================
 # MATRIZ DE GOOGLE 'G_google'
@@ -63,42 +73,37 @@ G_google = (
 # ===================================================
 # AUTOVALORES Y AUTOVECTORES
 # ===================================================
-
 autovalores, autovectores = np.linalg.eig(G_google.T)
 
 # Buscar autovalor más cercano a 1
 indice = np.argmin(np.abs(autovalores - 1))
 
-# Obtener autovector
+# Obtener autovector usando la variable 'indice'
 v = np.real(autovectores[:, indice])
 
-# Normalizar
-v = v / np.sum(v)
+# Aplicando fórmula de e: e_i=v_i/(v_1+v_2+...+v_n);
+e = v / np.sum(v)
 
 # ===================================================
 # DICCIONARIO CON LOS VALORES DEL VECTOR ESTACIONARIO
 # ===================================================
 
-pagerank = {
-    i: v[i]
-    for i in range(n)
-}
+pagerank_dict = {}
+for i, nodo in enumerate(G.nodes()):
+    pagerank_dict[nodo] = e[i]
 
 # ===================================================
 # IMPRIMIR RESULTADOS
 # ===================================================
 
 print("\nVector Resultante:\n")
-
-# Imprimir vector completo
-print(v)
+print(e)
 
 print("\nPageRank:\n")
 
-for nodo, valor in pagerank.items():
-
+for nodo in sorted(pagerank_dict.keys()):
+    valor = pagerank_dict[nodo]
     porcentaje = valor * 100
-
     print(
         f"Nodo {nodo}: "
         f"{valor:.4f} "
@@ -109,83 +114,40 @@ for nodo, valor in pagerank.items():
 # VISUALIZACIÓN
 # ===================================================
 
-# Posiciones automáticas
-pos = nx.spring_layout(
-    G,
-    seed=42,
-    k=2,
-    iterations=100
-)
+pos = nx.spring_layout(G, seed=42, k=2, iterations=100)
 
-# Tamaño nodos según PageRank
 sizes = [
-    8000 * pagerank[n]
+    8000 * pagerank_dict[n]
     for n in G.nodes()
 ]
 
-# Colores según PageRank
 node_colors = [
-    pagerank[n]
+    pagerank_dict[n]
     for n in G.nodes()
 ]
 
 plt.figure(figsize=(10,7))
 
-# Dibujar nodos
 nx.draw_networkx_nodes(
-    G,
-    pos,
-    node_size=sizes,
-    node_color=node_colors,
-    cmap=plt.cm.Pastel1,
+    G, pos, node_size=sizes, node_color=node_colors, cmap=plt.cm.Pastel1,
 )
 
-# Dibujar aristas
 nx.draw_networkx_edges(
-    G,
-    pos,
-    arrows=True,
-    arrowstyle='-|>',
-    arrowsize=30,
-    width=2,
-    edge_color='gray',
-    connectionstyle='arc3,rad=0.1'
+    G, pos, arrows=True, arrowstyle='-|>', arrowsize=30, width=2, edge_color='gray', connectionstyle='arc3,rad=0.1'
 )
 
-# Etiquetas
 labels = {
-    n: f"Nodo {n}\nPR={pagerank[n]:.3f}"
+    n: f"Nodo {n}\nPR={pagerank_dict[n]:.3f}"
     for n in G.nodes()
 }
 
 label_pos = {}
-
 for nodo, (x, y) in pos.items():
     label_pos[nodo] = (x, y + 0.08)
 
-nx.draw_networkx_labels(
-    G,
-    label_pos,
-    labels=labels,
-    font_size=12,
-    font_color='black'
-)
+nx.draw_networkx_labels(G, label_pos, labels=labels, font_size=12, font_color='black')
 
-# Título
-plt.title(
-    "Visualización de PageRank",
-    fontsize=25,
-    fontweight='bold'
-)
-
-# Quitar ejes
+plt.title("Visualización de PageRank", fontsize=25, fontweight='bold')
 plt.axis('off')
-
-# Guardar imagen
-plt.savefig(
-    "pagerank.png",
-    dpi=300
-)
-
-# Mostrar
+plt.savefig("pagerank.png", dpi=300)
 plt.show()
